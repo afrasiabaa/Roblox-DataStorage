@@ -14,6 +14,22 @@ local DataStoreService = game:GetService("DataStoreService")
 -- Variables
 local PlayerDataStore = DataStoreService:GetDataStore("PlayerDataStore")
 
+
+-- Helper Functions
+function GetPlayerData(player: Player) --> Returns the table of the players data
+	assert(player:IsA("Player"), "Argument[1]: player, is not of type Player")
+
+	local playerID = tostring(player.UserId)
+	local playerData = nil
+
+	local success, error = pcall(function()
+		playerData = PlayerDataStore:GetAsync(tostring(playerID))
+	end)
+
+	return playerData
+
+end
+
 -- Functions
 function DataHandler.SavePlayerData(player: Player)
 	assert(player:IsA("Player"), "Argument[1]: player, is not of type Player")
@@ -46,15 +62,20 @@ function DataHandler.LoadPlayerData(player: Player)
 	assert(player:IsA("Player"), "Argument[1]: player, is not of type Player")
 	
 	-- Handle Player data logic here... --
-end
-
-function DataHandler.GetPlayerData(player: Player) --> Returns the table of the players data
-	assert(player:IsA("Player"), "Argument[1]: player, is not of type Player")
+	local playerData = GetPlayerData(player)
 	
-	local playerID = tostring(player.UserId)
-	local playerData = PlayerDataStore:GetAsync(tostring())
-	
-	return playerData
+	if playerData then
+		for statName, statValue in pairs(playerData["leaderstats"]) do
+			local leaderStat = player:WaitForChild("leaderstats"):FindFirstChild(statName)
+			if leaderStat then
+				leaderStat.Value = statValue
+			end
+		end
+		
+	else
+		-- Can add any sort of necessary code for new players.
+		
+	end
 	
 end
 
@@ -64,12 +85,15 @@ function DataHandler.PlayerHasData(player: Player) --> Returns true if player do
 	local isTrue = false -- Holds the value of the return
 	local playerID = tostring(player.UserId)
 	
-	if PlayerDataStore:GetAsync(playerID) then
-		isTrue = true
-	else
-		isTrue = false
-	end
+	local success, error = pcall(function()
+		if PlayerDataStore:GetAsync(playerID) then
+			isTrue = true
+		else
+			isTrue = false
+		end
+	end)
 	
+	print(isTrue)
 	return isTrue
 	
 end
